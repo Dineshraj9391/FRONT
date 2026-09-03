@@ -1,0 +1,27 @@
+name: SpendWise CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Compile Python
+        run: python -m py_compile app.py
+      - name: Smoke test Flask routes
+        run: |
+          python - <<'PY'
+          from app import app
+          client = app.test_client()
+          for path in ['/', '/login', '/register']:
+              response = client.get(path)
+              assert response.status_code == 200, (path, response.status_code)
+          print('Public route smoke test passed')
+          PY
